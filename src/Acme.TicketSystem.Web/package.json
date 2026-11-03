@@ -1,0 +1,15 @@
+{
+  "version": "1.0.0",
+  "name": "my-app",
+  "private": true,
+  "dependencies": {
+    "@abp/aspnetcore.mvc.ui.theme.leptonxlite": "~3.3.0",
+    "jquery": "3.7.1"
+  },
+  "resolutions": {
+    "jquery": "3.7.1"
+  },
+  "overrides": {
+    "jquery": "3.7.1"
+  }
+}

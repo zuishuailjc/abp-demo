@@ -1,0 +1,98 @@
+@page
+@using Acme.TicketSystem.Localization
+@using Acme.TicketSystem.Web.Menus
+@using Acme.TicketSystem.Web.Pages.Tickets
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Layout
+@model IndexModel
+@inject IHtmlLocalizer<TicketSystemResource> L
+@inject IPageLayout PageLayout
+@{
+    PageLayout.Content.Title = L["SellTickets"].Value;
+    PageLayout.Content.MenuItemName = TicketSystemMenus.Tickets;
+}
+
+@section scripts {
+    <abp-script src="/Pages/Tickets/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>@L["SellTickets"]</abp-card-title>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="row g-2 mb-3">
+            <div class="col-md-3">
+                <label class="form-label" for="StoreId">@L["StoreId"]</label>
+                <input type="text" id="StoreId" class="form-control" value="S001" maxlength="32" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="CustomerName">@L["CustomerName"]</label>
+                <input type="text" id="CustomerName" class="form-control" maxlength="50" />
+            </div>
+            <div class="col-md-3">
+                <label class="form-label" for="CustomerPhone">@L["CustomerPhone"]</label>
+                <input type="text" id="CustomerPhone" class="form-control" maxlength="15" />
+            </div>
+        </div>
+
+        <table class="table table-sm align-middle" id="LinesTable">
+            <thead>
+                <tr>
+                    <th style="width: 20%">@L["TicketCode"]</th>
+                    <th style="width: 26%">@L["TicketName"]</th>
+                    <th style="width: 16%">@L["UnitPrice"]</th>
+                    <th style="width: 12%">@L["Quantity"]</th>
+                    <th style="width: 16%" class="text-end">@L["Amount"]</th>
+                    <th style="width: 10%"></th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+            <tfoot>
+                <tr>
+                    <td colspan="4" class="text-end fw-bold">@L["Total"]</td>
+                    <td class="text-end fw-bold" id="TotalAmount">0.00</td>
+                    <td></td>
+                </tr>
+            </tfoot>
+        </table>
+
+        <div class="d-flex gap-2">
+            <abp-button id="AddLineButton" text="@L["AddTicketLine"].Value" icon="plus" button-type="Secondary" />
+            <abp-button id="SellButton" text="@L["Sell"].Value" icon="shopping-cart" button-type="Primary" />
+        </div>
+    </abp-card-body>
+</abp-card>
+
+<abp-card id="ResultCard" style="display: none;">
+    <abp-card-header>
+        <abp-card-title>@L["SellResult"]</abp-card-title>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <span class="text-muted">@L["SaleNo"]：</span><strong id="ResultSaleNo"></strong>
+            </div>
+            <div class="col-md-4">
+                <span class="text-muted">@L["Total"]：</span><strong id="ResultTotal"></strong>
+            </div>
+        </div>
+
+        <table class="table table-sm table-striped" id="ResultTable">
+            <thead>
+                <tr>
+                    <th>@L["TicketNo"]</th>
+                    <th>@L["TicketName"]</th>
+                    <th class="text-end">@L["UnitPrice"]</th>
+                    <th class="text-center">@L["Status"]</th>
+                    <th class="text-end">@L["Actions"]</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </abp-card-body>
+</abp-card>

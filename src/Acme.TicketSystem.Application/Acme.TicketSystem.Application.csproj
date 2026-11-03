@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Import Project="..\..\common.props" />
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <RootNamespace>Acme.TicketSystem</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Acme.TicketSystem.Domain\Acme.TicketSystem.Domain.csproj" />
+    <ProjectReference Include="..\Acme.TicketSystem.Application.Contracts\Acme.TicketSystem.Application.Contracts.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Volo.Abp.Account.Application" Version="8.3.0" />
+    <PackageReference Include="Volo.Abp.Identity.Application" Version="8.3.0" />
+    <PackageReference Include="Volo.Abp.PermissionManagement.Application" Version="8.3.0" />
+    <PackageReference Include="Volo.Abp.TenantManagement.Application" Version="8.3.0" />
+    <PackageReference Include="Volo.Abp.FeatureManagement.Application" Version="8.3.0" />
+    <PackageReference Include="Volo.Abp.SettingManagement.Application" Version="8.3.0" />
+    <!-- 仅为在应用层使用 IQueryable 的异步扩展（CountAsync / ToListAsync） -->
+    <PackageReference Include="Volo.Abp.EntityFrameworkCore" Version="8.3.0" />
+  </ItemGroup>
+
+</Project>

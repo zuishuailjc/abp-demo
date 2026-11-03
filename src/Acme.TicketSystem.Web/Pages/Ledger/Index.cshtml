@@ -1,0 +1,46 @@
+@page
+@using Acme.TicketSystem.Localization
+@using Acme.TicketSystem.Web.Menus
+@using Acme.TicketSystem.Web.Pages.Ledger
+@using Microsoft.AspNetCore.Mvc.Localization
+@using Volo.Abp.AspNetCore.Mvc.UI.Layout
+@model IndexModel
+@inject IHtmlLocalizer<TicketSystemResource> L
+@inject IPageLayout PageLayout
+@{
+    PageLayout.Content.Title = L["Ledger"].Value;
+    PageLayout.Content.MenuItemName = TicketSystemMenus.Ledger;
+}
+
+@section scripts {
+    <abp-script src="/Pages/Ledger/Index.js" />
+}
+
+<abp-card>
+    <abp-card-header>
+        <abp-row>
+            <abp-column size-md="_6">
+                <abp-card-title>@L["Ledger"]</abp-card-title>
+            </abp-column>
+        </abp-row>
+    </abp-card-header>
+    <abp-card-body>
+        <div class="row g-2 align-items-center mb-3">
+            <div class="col-auto">
+                <input type="text" id="LedgerTicketNoInput" class="form-control" maxlength="32"
+                       placeholder="@L["TicketNo"]" />
+            </div>
+            <div class="col-auto">
+                <abp-button id="LedgerSearchButton" text="@L["Search"].Value" icon="search" button-type="Primary" />
+            </div>
+        </div>
+
+        <div class="d-flex gap-4 mb-3">
+            <div><span class="text-muted">@L["LedgerCount"]:</span> <strong id="LedgerCount">0</strong></div>
+            <div><span class="text-muted">@L["DebitTotal"]:</span> <strong id="DebitTotal">0.00</strong></div>
+            <div><span class="text-muted">@L["CreditTotal"]:</span> <strong id="CreditTotal">0.00</strong></div>
+        </div>
+
+        <abp-table striped-rows="true" id="LedgerTable"></abp-table>
+    </abp-card-body>
+</abp-card>
