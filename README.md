@@ -56,6 +56,42 @@ This is a layered monolith application that consists of the following applicatio
 * `Acme.TicketSystem.DbMigrator`: A console application which applies the migrations and also seeds the initial data. It is useful on development as well as on production environment.
 * `Acme.TicketSystem.Web`: ASP.NET Core MVC / Razor Pages application that is the essential web application of the solution.
 
+### 领域模型（DDD）
+
+以"窗口售票 + 财务管理"为业务，领域层（`src/Acme.TicketSystem.Domain`）里有这些东西：
+
+| 概念 | 代码 | 职责 |
+|---|---|---|
+| **聚合根** | `Tickets/TicketSale.cs` | 一次售票 = 一个聚合 = 一个事务边界。内含明细行、已出票、财务流水三个内部实体 |
+| **聚合内实体** | `TicketSaleLine` / `SoldTicket` / `TicketLedgerEntry` | 构造函数 `internal`，外部只能通过聚合根创建它们 |
+| **值对象** | `Tickets/TicketPriceQuote.cs`、`DiscountPolicy.cs` | 报价结果、整单优惠规则 |
+| **领域事件** | `Tickets/TicketValidatedEvent.cs` | 核销后发布，由外部订阅 |
+| **领域服务** | `Tickets/TicketPricingDomainService.cs` | 定价：读票种目录 + 优惠活动，算出这一单该收多少钱 |
+| **端口** | `Tickets/ITicketNumberGenerator.cs` | 票号来自外部号段资源，聚合不关心来源 |
+| **仓储抽象** | `Tickets/ITicketSaleRepository.cs`、`ITicketPriceRepository.cs` | 接口在领域层，实现（EF Core）在基础设施层 |
+| **聚合根行为（不变量）** | `IssueTickets` / `RefundTicket` | 票卖出去账必须同时记上；退票必须同时冲销——一次事务原子成立 |
+
+**规则该放哪儿？** 判断标准只有一条：这条规则依赖的状态属于谁。
+
+* 只依赖**一个聚合内部**的状态 → 放聚合根的方法（`IssueTickets`、`RefundTicket`）
+* 依赖**外部配置或别的聚合**（票种目录、优惠活动） → 放**领域服务**（`TicketPricingDomainService`）
+* 不含业务规则，只做编排（事务、权限、仓储、DTO） → 放**应用服务**（`TicketAppService`）
+
+比如"退票冲销金额 = 原流水取负"必须和"票标记已退"在同一次提交里原子成立，所以它在聚合里；
+而"这个票种卖多少钱"来自票种目录和当前活动，不属于任何一张售票单，所以在领域服务里。
+
+### 测试
+
+```bash
+dotnet test Acme.TicketSystem.sln
+```
+
+* `test/Acme.TicketSystem.Domain.Tests`：纯内存单元测试，不连库、不启 DI 容器。
+  聚合规则（`Domains/TicketSaleTests.cs`）和定价规则（`Tickets/TicketPricingDomainServiceTests.cs`）
+  都是这种——因为业务规则都在领域对象上，所以不需要数据库就能验证。
+* `test/Acme.TicketSystem.EntityFrameworkCore.Tests`：SQLite 内存库上的集成测试，
+  覆盖种子数据、仓储实现，以及"客户端不传价格 → 服务端定价 → 账实一致"的完整链路。
+
 ### Deploying the application
 
 Deploying an ABP application is not different than deploying any .NET or ASP.NET Core application. However, there are some topics that you should care about when you are deploying your applications. You can check ABP's [Deployment documentation](https://docs.abp.io/en/abp/latest/Deployment/Index) before deploying your application.

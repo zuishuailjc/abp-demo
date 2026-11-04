@@ -23,7 +23,11 @@
         "StoreId": "Store",
         "TicketCode": "Ticket Code",
         "TicketName": "Ticket Name",
+        "SelectTicketType": "Select a ticket type",
+        "PriceFromCatalogHint": "Ticket types and prices come from the price catalog and are decided by the server.",
         "UnitPrice": "Unit Price",
+        "OriginalAmount": "Original Amount",
+        "DiscountAmount": "Discount",
         "Quantity": "Quantity",
         "Amount": "Amount",
         "Total": "Total",
@@ -62,6 +66,7 @@
         "TicketSystem:00106": "Ticket {TicketNo} has already been refunded.",
         "TicketSystem:00107": "A refunded ticket cannot be checked in.",
         "TicketSystem:00201": "The original ledger entries of the ticket were not found, cannot reverse it.",
-        "TicketSystem:00202": "The ticket has already been reversed, cannot reverse it again."
+        "TicketSystem:00202": "The ticket has already been reversed, cannot reverse it again.",
+        "TicketSystem:00203": "Ticket {TicketCode} does not exist or is no longer on sale."
     }
 }

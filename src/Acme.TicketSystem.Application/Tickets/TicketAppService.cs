@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Acme.TicketSystem.Permissions;
@@ -16,23 +17,27 @@ public class TicketAppService : TicketSystemAppService, ITicketAppService
 {
     private readonly ITicketSaleRepository _ticketSaleRepository;
     private readonly ITicketNumberGenerator _ticketNumberGenerator;
+    private readonly TicketPricingDomainService _ticketPricingDomainService;
 
     public TicketAppService(
         ITicketSaleRepository ticketSaleRepository,
-        ITicketNumberGenerator ticketNumberGenerator)
+        ITicketNumberGenerator ticketNumberGenerator,
+        TicketPricingDomainService ticketPricingDomainService)
     {
         _ticketSaleRepository = ticketSaleRepository;
         _ticketNumberGenerator = ticketNumberGenerator;
+        _ticketPricingDomainService = ticketPricingDomainService;
     }
 
     /// <summary>窗口售票：POST /api/app/ticket/sell</summary>
     [Authorize(TicketSystemPermissions.Tickets.Sell)]
     public async Task<TicketSaleDto> SellAsync(SellTicketsInput input)
     {
-        if (input.Lines.Count == 0)
-        {
-            throw new BusinessException(TicketSystemDomainErrorCodes.TicketLinesCannotBeEmpty);
-        }
+        // 定价交给领域服务：它要读票种目录和优惠活动，
+        // 这些都不属于这张售票单，所以规则不能塞进聚合，只能放领域服务。
+        // 客户端传过来的只有"要哪个票、几张"，没有价格。
+        var pricing = await _ticketPricingDomainService.CalculateAsync(
+            input.Lines.Select(x => new PricingLineRequest(x.TicketCode, x.Quantity)).ToList());
 
         var sale = new TicketSale(
             CurrentTenant.Id,
@@ -43,9 +48,10 @@ public class TicketAppService : TicketSystemAppService, ITicketAppService
             input.CustomerName,
             input.CustomerPhone);
 
-        foreach (var line in input.Lines)
+        // 聚合只负责记账：价格已经定好，它只保证"卖多少钱就记多少钱"
+        foreach (var quote in pricing.Quotes)
         {
-            sale.AddLine(line.TicketCode, line.TicketName, line.UnitPrice, line.Quantity);
+            sale.AddLine(quote.TicketCode, quote.TicketName, quote.UnitPrice, quote.Quantity);
         }
 
         // 取号和出票分开：聚合不关心票号从哪来，也就方便了单测
@@ -54,7 +60,22 @@ public class TicketAppService : TicketSystemAppService, ITicketAppService
 
         await _ticketSaleRepository.InsertAsync(sale, autoSave: true);
 
-        return ObjectMapper.Map<TicketSale, TicketSaleDto>(sale);
+        var dto = ObjectMapper.Map<TicketSale, TicketSaleDto>(sale);
+
+        // 原价和优惠是定价时的信息，聚合自己不知道，所以单独回填
+        dto.OriginalAmount = pricing.OriginalAmount;
+        dto.DiscountAmount = pricing.DiscountAmount;
+
+        return dto;
+    }
+
+    /// <summary>票种目录（只读）：GET /api/app/ticket/prices</summary>
+    [Authorize(TicketSystemPermissions.Tickets.Default)]
+    public async Task<List<TicketPriceDto>> GetPricesAsync()
+    {
+        var prices = await _ticketPricingDomainService.GetActivePricesAsync();
+
+        return ObjectMapper.Map<List<TicketPrice>, List<TicketPriceDto>>(prices);
     }
 
     /// <summary>

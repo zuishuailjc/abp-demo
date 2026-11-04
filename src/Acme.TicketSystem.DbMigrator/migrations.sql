@@ -1322,3 +1322,54 @@ GO
 COMMIT;
 GO
 
+BEGIN TRANSACTION;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104095712_AddTicketPrices'
+)
+BEGIN
+    CREATE TABLE [AppTicketPrices] (
+        [Id] uniqueidentifier NOT NULL,
+        [TenantId] uniqueidentifier NULL,
+        [TicketCode] nvarchar(32) NOT NULL,
+        [TicketName] nvarchar(64) NOT NULL,
+        [UnitPrice] decimal(18,2) NOT NULL,
+        [IsActive] bit NOT NULL,
+        [ExtraProperties] nvarchar(max) NOT NULL,
+        [ConcurrencyStamp] nvarchar(40) NOT NULL,
+        [CreationTime] datetime2 NOT NULL,
+        [CreatorId] uniqueidentifier NULL,
+        [LastModificationTime] datetime2 NULL,
+        [LastModifierId] uniqueidentifier NULL,
+        [IsDeleted] bit NOT NULL DEFAULT CAST(0 AS bit),
+        [DeleterId] uniqueidentifier NULL,
+        [DeletionTime] datetime2 NULL,
+        CONSTRAINT [PK_AppTicketPrices] PRIMARY KEY ([Id])
+    );
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104095712_AddTicketPrices'
+)
+BEGIN
+    CREATE UNIQUE INDEX [IX_AppTicketPrices_TicketCode] ON [AppTicketPrices] ([TicketCode]);
+END;
+GO
+
+IF NOT EXISTS (
+    SELECT * FROM [__EFMigrationsHistory]
+    WHERE [MigrationId] = N'20261104095712_AddTicketPrices'
+)
+BEGIN
+    INSERT INTO [__EFMigrationsHistory] ([MigrationId], [ProductVersion])
+    VALUES (N'20261104095712_AddTicketPrices', N'8.0.4');
+END;
+GO
+
+COMMIT;
+GO
+

@@ -46,6 +46,7 @@ public class TicketSystemEntityFrameworkCoreModule : AbpModule
             /* 自定义仓储接口不会被 AddDefaultRepositories 自动注册，
              * 必须在这里把实现类和接口显式绑定，否则注入 IOrderRepository 会失败。 */
             options.AddRepository<TicketSale, EfCoreTicketSaleRepository>();
+            options.AddRepository<TicketPrice, EfCoreTicketPriceRepository>();
         });
 
         Configure<AbpDbContextOptions>(options =>

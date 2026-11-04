@@ -15,6 +15,16 @@ public class TicketSaleDto
 	public string? CustomerPhone { get; set; }
 	public decimal TotalAmount { get; set; }
 	public int TotalQuantity { get; set; }
+
+	/// <summary>
+	/// 原价合计（未打折前）。定价是领域服务的事，聚合自己不知道原价，
+	/// 所以只有售票响应里有值，退票/核销响应为 0。
+	/// </summary>
+	public decimal OriginalAmount { get; set; }
+
+	/// <summary>整单优惠金额。同样只有售票响应里有值。</summary>
+	public decimal DiscountAmount { get; set; }
+
 	public decimal RefundedAmount { get; set; }
 	public bool IsFullyRefunded { get; set; }
 	public bool IsPartiallyRefunded { get; set; }

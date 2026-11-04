@@ -16,5 +16,6 @@ public class TicketSystemApplicationAutoMapperProfile : Profile
         CreateMap<TicketSaleLine, TicketSaleLineDto>();
         CreateMap<SoldTicket, SoldTicketDto>();
         CreateMap<TicketLedgerEntry, TicketLedgerEntryDto>().ForMember(d => d.EntryType, o => o.MapFrom(s => s.EntryType.ToString()));
+        CreateMap<TicketPrice, TicketPriceDto>();
 	}
 }

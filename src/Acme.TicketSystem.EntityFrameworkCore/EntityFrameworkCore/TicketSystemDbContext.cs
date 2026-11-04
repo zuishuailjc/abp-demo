@@ -37,6 +37,9 @@ public class TicketSystemDbContext :
 	public DbSet<SoldTicket> SoldTickets { get; set; }
 	public DbSet<TicketLedgerEntry> TicketLedgerEntries { get; set; }
 
+	// ---- 票种目录：独立的聚合，定价时读它 ----
+	public DbSet<TicketPrice> TicketPrices { get; set; }
+
 	#endregion
 
 	#region Entities from the modules
@@ -162,6 +165,20 @@ public class TicketSystemDbContext :
 			b.Property(x => x.Reason).HasMaxLength(200);
 
 			b.HasIndex(x => new { x.TicketSaleId, x.TicketNo });
+		});
+
+		// ================= 票种目录 =================
+		builder.Entity<TicketPrice>(b =>
+		{
+			b.ToTable(TicketSystemConsts.DbTablePrefix + "TicketPrices", TicketSystemConsts.DbSchema);
+			b.ConfigureByConvention();
+
+			b.Property(x => x.TicketCode).IsRequired().HasMaxLength(TicketConsts.MaxTicketCodeLength);
+			b.Property(x => x.TicketName).IsRequired().HasMaxLength(TicketConsts.MaxTicketNameLength);
+			b.Property(x => x.UnitPrice).HasPrecision(18, 2);
+
+			// 票种编码唯一：目录里不能出现两个同编码的票种，否则定价结果不确定
+			b.HasIndex(x => x.TicketCode).IsUnique();
 		});
 	}
 }

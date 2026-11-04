@@ -42,4 +42,7 @@ public static class TicketSystemDomainErrorCodes
 
 	/// <summary>退款冲销 该票已经冲销过</summary>
 	public const string LedgerAlreadyReversed = "TicketSystem:00202";
+
+	/// <summary>定价：票种不存在或已停售</summary>
+	public const string TicketPriceNotFound = "TicketSystem:00203";
 }

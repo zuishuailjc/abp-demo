@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Acme.TicketSystem.Tickets;
 using Volo.Abp.Application.Services;
@@ -23,4 +24,7 @@ public interface ITicketAppService : IApplicationService
 
     /// <summary>交易流水列表（只读查询）。GET /api/app/ticket/ledger</summary>
     Task<LedgerResultDto> GetLedgerAsync(LedgerQueryInput input);
+
+    /// <summary>票种目录（只读查询），给售票页的下拉框用。GET /api/app/ticket/prices</summary>
+    Task<List<TicketPriceDto>> GetPricesAsync();
 }

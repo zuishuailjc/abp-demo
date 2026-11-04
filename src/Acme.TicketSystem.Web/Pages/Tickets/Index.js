@@ -2,17 +2,30 @@
     $(function () {
         var l = abp.localization.getResource('TicketSystem');
 
+        // 票种目录：单价、名称都从服务端拿，页面只读不填
+        var prices = [];
+
         function escapeHtml(value) {
             return $('<div>').text(value === null || value === undefined ? '' : value).html();
         }
 
-        // 一个票种一行；行内有编码、名称、单价、数量，小计自动算
+        function findPrice(code) {
+            for (var i = 0; i < prices.length; i++) {
+                if (prices[i].ticketCode === code) {
+                    return prices[i];
+                }
+            }
+
+            return null;
+        }
+
+        // 一个票种一行：票种（下拉）、名称（只读）、单价（只读）、数量（可填），小计自动算
         function createRow() {
-            return $(
+            var $row = $(
                 '<tr>' +
-                '<td><input type="text" class="form-control form-control-sm line-code" maxlength="32" placeholder="ADULT" /></td>' +
-                '<td><input type="text" class="form-control form-control-sm line-name" maxlength="64" placeholder="' + l('TicketName') + '" /></td>' +
-                '<td><input type="number" class="form-control form-control-sm line-price" min="0" step="0.01" value="0" /></td>' +
+                '<td><select class="form-select form-select-sm line-code"></select></td>' +
+                '<td class="line-name"></td>' +
+                '<td class="line-price text-end"></td>' +
                 '<td><input type="number" class="form-control form-control-sm line-qty" min="1" step="1" value="1" /></td>' +
                 '<td class="line-amount text-end">0.00</td>' +
                 '<td class="text-end">' +
@@ -21,17 +34,56 @@
                 '</td>' +
                 '</tr>'
             );
+
+            fillOptions($row);
+            return $row;
+        }
+
+        function fillOptions($row) {
+            var $select = $row.find('.line-code');
+
+            $select.empty();
+            $select.append($('<option></option>').attr('value', '').text(l('SelectTicketType')));
+
+            prices.forEach(function (price) {
+                $select.append(
+                    $('<option></option>')
+                        .attr('value', price.ticketCode)
+                        .attr('data-name', price.ticketName)
+                        .attr('data-price', price.unitPrice)
+                        .text(price.ticketName + ' (' + price.ticketCode + ')')
+                );
+            });
+        }
+
+        // 选中票种后，把名称和目录单价显示出来（只读）
+        function syncRow($row) {
+            var code = $row.find('.line-code').val();
+            var price = code ? findPrice(code) : null;
+
+            $row.find('.line-name').text(price ? price.ticketName : '');
+            $row.find('.line-price').text(price ? Number(price.unitPrice).toFixed(2) : '');
+
+            recalc();
         }
 
         function recalc() {
             var total = 0;
 
             $('#LinesTable tbody tr').each(function () {
-                var price = parseFloat($(this).find('.line-price').val()) || 0;
-                var quantity = parseInt($(this).find('.line-qty').val(), 10) || 0;
-                var amount = price * quantity;
+                var $row = $(this);
+                var code = $row.find('.line-code').val();
+                var price = code ? findPrice(code) : null;
 
-                $(this).find('.line-amount').text(amount.toFixed(2));
+                if (!price) {
+                    $row.find('.line-amount').text('0.00');
+                    return;
+                }
+
+                var quantity = parseInt($row.find('.line-qty').val(), 10) || 0;
+                var amount = price.unitPrice * quantity;
+
+                $row.find('.line-amount').text(amount.toFixed(2));
                 total += amount;
             });
 
@@ -46,7 +98,9 @@
         }
 
         function addRow() {
-            $('#LinesTable tbody').append(createRow());
+            var $row = createRow();
+            $('#LinesTable tbody').append($row);
+            return $row;
         }
 
         $('#AddLineButton').click(function (e) {
@@ -65,26 +119,27 @@
             recalc();
         });
 
-        $('#LinesTable').on('input change', '.line-price, .line-qty', recalc);
+        $('#LinesTable').on('change', '.line-code', function (e) {
+            syncRow($(this).closest('tr'));
+        });
+
+        $('#LinesTable').on('input change', '.line-qty', recalc);
 
         function collectInput() {
             var lines = [];
 
             $('#LinesTable tbody tr').each(function () {
-                var code = $.trim($(this).find('.line-code').val());
-                var name = $.trim($(this).find('.line-name').val());
-                var price = parseFloat($(this).find('.line-price').val()) || 0;
-                var quantity = parseInt($(this).find('.line-qty').val(), 10) || 0;
+                var $row = $(this);
+                var code = $row.find('.line-code').val();
+                var quantity = parseInt($row.find('.line-qty').val(), 10) || 0;
 
-                // 整行空着就跳过，避免用户多添的空行也被提交
-                if (!code && !name && quantity <= 0) {
+                // 没选票种的空行直接跳过
+                if (!code) {
                     return;
                 }
 
                 lines.push({
                     ticketCode: code,
-                    ticketName: name,
-                    unitPrice: price,
                     quantity: quantity
                 });
             });
@@ -102,9 +157,18 @@
             $('#ResultSaleNo').text(result.saleNo);
 
             var summary = result.totalQuantity + ' × / ' + Number(result.totalAmount).toFixed(2);
+
+            // 有优惠时把原价和优惠一起显示，让"定价在服务端"这件事看得见
+            if (result.discountAmount > 0) {
+                summary = l('OriginalAmount') + ' ' + Number(result.originalAmount).toFixed(2) +
+                    ' - ' + l('DiscountAmount') + ' ' + Number(result.discountAmount).toFixed(2) +
+                    ' = ' + Number(result.totalAmount).toFixed(2);
+            }
+
             if (result.refundedAmount > 0) {
                 summary += '  (' + l('Refunded') + ': ' + Number(result.refundedAmount).toFixed(2) + ')';
             }
+
             $('#ResultTotal').text(summary);
 
             var $tbody = $('#ResultTable tbody').empty();
@@ -215,6 +279,7 @@
 
             $('#SellButton').prop('disabled', true);
 
+            // 注意：请求里只有票种和张数，没有单价——价格由服务端的定价领域服务算
             abp.ajax({
                 url: abp.appPath + 'api/app/ticket/sell',
                 type: 'POST',
@@ -229,6 +294,14 @@
             });
         });
 
-        resetRows();
+        // 先取票种目录，再渲染表格
+        abp.ajax({
+            url: abp.appPath + 'api/app/ticket/prices',
+            type: 'GET'
+        }).then(function (result) {
+            prices = result || [];
+        }).always(function () {
+            resetRows();
+        });
     });
 })();

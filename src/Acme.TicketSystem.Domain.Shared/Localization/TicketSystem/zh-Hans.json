@@ -23,7 +23,11 @@
         "StoreId": "门店",
         "TicketCode": "票种编码",
         "TicketName": "票种名称",
+        "SelectTicketType": "请选择票种",
+        "PriceFromCatalogHint": "票种和单价来自票种目录，由服务端定价，前端不能修改价格。",
         "UnitPrice": "单价",
+        "OriginalAmount": "原价",
+        "DiscountAmount": "优惠",
         "Quantity": "数量",
         "Amount": "金额",
         "Total": "合计",
@@ -62,6 +66,7 @@
         "TicketSystem:00106": "票号 {TicketNo} 已经退过了。",
         "TicketSystem:00107": "已退票的票不能核销。",
         "TicketSystem:00201": "找不到该票的原始财务流水，无法冲销。",
-        "TicketSystem:00202": "该票已经冲销过，不能重复冲销。"
+        "TicketSystem:00202": "该票已经冲销过，不能重复冲销。",
+        "TicketSystem:00203": "票种 {TicketCode} 不存在或已停售。"
     }
 }
